@@ -1,12 +1,19 @@
 // src/components/ServersScreen.js
 import React, { useState, useEffect } from 'react';
-import { Server } from 'lucide-react';
+import { Server, PlusCircle } from 'lucide-react';
 import { sampleServerData, getPaginatedData } from '../services/mockData';
 
 const ServersScreen = ({ dashboardData }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [serverData, setServerData] = useState([]);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [newServer, setNewServer] = useState({
+    name: '',
+    description: '',
+    fingerprint: '',
+    region: 'US-East'
+  });
   const rowsPerPage = 5;
   
   useEffect(() => {
@@ -29,13 +36,66 @@ const ServersScreen = ({ dashboardData }) => {
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage + 1;
   const indexOfLastRow = Math.min(currentPage * rowsPerPage, serverData.length);
   
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewServer(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle form submission
+  const handleRegisterServer = (e) => {
+    e.preventDefault();
+    
+    // Generate a random fingerprint if not provided
+    const fingerprint = newServer.fingerprint || 
+      Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+    
+    // Create new server object
+    const server = {
+      id: `server-${serverData.length + 1}`,
+      name: newServer.name,
+      description: newServer.description,
+      fingerprint: fingerprint,
+      status: 'online',
+      region: newServer.region,
+      uptime: 0,
+      load: 10
+    };
+    
+    // Add new server to the list
+    setServerData([...serverData, server]);
+    
+    // Reset form and close modal
+    setNewServer({
+      name: '',
+      description: '',
+      fingerprint: '',
+      region: 'US-East'
+    });
+    setShowRegisterModal(false);
+  };
+  
   return (
     <div className="p-6">
-      <div className="flex items-center mb-6">
-        <div className="text-purple-400 mr-2">
-          <Server size={24} />
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center">
+          <div className="text-purple-400 mr-2">
+            <Server size={24} />
+          </div>
+          <h1 className="text-2xl font-semibold">MCP Servers</h1>
         </div>
-        <h1 className="text-2xl font-semibold">MCP Servers</h1>
+        
+        {/* Register New MCP Server Button */}
+        <button 
+          className="flex items-center bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-md"
+          onClick={() => setShowRegisterModal(true)}
+        >
+          <PlusCircle size={18} className="mr-2" />
+          Register New MCP Server
+        </button>
       </div>
       
       <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 mb-6">
@@ -43,11 +103,11 @@ const ServersScreen = ({ dashboardData }) => {
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="bg-gray-700 rounded-lg p-4">
             <div className="text-lg text-gray-300 mb-2">Total Servers</div>
-            <div className="text-3xl font-bold text-cyan-400">{dashboardData.servers.count}</div>
+            <div className="text-3xl font-bold text-cyan-400">{dashboardData?.servers?.count || serverData.length}</div>
           </div>
           <div className="bg-gray-700 rounded-lg p-4">
             <div className="text-lg text-gray-300 mb-2">Online Servers</div>
-            <div className="text-3xl font-bold text-green-400">{dashboardData.servers.online}</div>
+            <div className="text-3xl font-bold text-green-400">{dashboardData?.servers?.online || serverData.filter(s => s.status === 'online').length}</div>
           </div>
         </div>
       </div>
@@ -128,6 +188,83 @@ const ServersScreen = ({ dashboardData }) => {
           </div>
         </div>
       </div>
+      
+      {/* Register Server Modal */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Register New MCP Server</h2>
+            
+            <form onSubmit={handleRegisterServer}>
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">Server Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={newServer.name}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">Description</label>
+                <textarea
+                  name="description"
+                  value={newServer.description}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500 h-24"
+                  required
+                />
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-gray-300 mb-2">Region</label>
+                <select
+                  name="region"
+                  value={newServer.region}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                >
+                  <option value="US-East">US-East</option>
+                  <option value="US-West">US-West</option>
+                  <option value="EU-Central">EU-Central</option>
+                  <option value="Asia-Pacific">Asia-Pacific</option>
+                </select>
+              </div>
+              
+              <div className="mb-6">
+                <label className="block text-gray-300 mb-2">Fingerprint (Optional)</label>
+                <input
+                  type="text"
+                  name="fingerprint"
+                  value={newServer.fingerprint}
+                  onChange={handleInputChange}
+                  placeholder="Auto-generated if left blank"
+                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono text-sm"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                  onClick={() => setShowRegisterModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600"
+                >
+                  Register
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
