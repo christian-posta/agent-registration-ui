@@ -58,16 +58,38 @@ const ServersScreen = ({ dashboardData }) => {
     
     // Mock server info based on URL
     const mockServerInfo = {
-      name: `MCP-${new URL(serverUrl).hostname.split('.')[0].toUpperCase()}`,
+      name: `mcp-${new URL(serverUrl).hostname.split('.')[0].toLowerCase()}`,
       version: "3.2.1",
       region: ["US-East", "US-West", "EU-Central", "Asia-Pacific"][Math.floor(Math.random() * 4)],
       description: "This MCP server provides centralized control and coordination for system operations.",
-      resources: {
-        cpu: "16 cores",
-        memory: "64 GB",
-        storage: "2 TB SSD"
-      },
-      lastUpdate: new Date().toISOString()
+      lastUpdate: new Date().toISOString(),
+      tools: [
+        {
+          name: "file_search",
+          description: "Search through files and directories",
+          parameters: {
+            query: "string",
+            path: "string",
+            recursive: "boolean"
+          }
+        },
+        {
+          name: "code_analysis",
+          description: "Analyze code for patterns and issues",
+          parameters: {
+            file_path: "string",
+            analysis_type: ["complexity", "security", "style"]
+          }
+        },
+        {
+          name: "database_query",
+          description: "Execute SQL queries on connected databases",
+          parameters: {
+            query: "string",
+            database: "string"
+          }
+        }
+      ]
     };
     
     setServerInfo(mockServerInfo);
@@ -81,20 +103,19 @@ const ServersScreen = ({ dashboardData }) => {
     
     // Simulate processing time (5 seconds)
     setTimeout(() => {
-      // Randomly determine if security issues were found
-      // In a real app, this would be actual security analysis
-      const securityIssues = Math.random() > 0.7; // 30% chance of security issues
+      // Check if the URL is the bad MCP server
+      const isBadServer = new URL(serverUrl).hostname === 'bad-mcp.com';
       
       setIsProcessing(false);
       setSecurityStatus({
-        passed: !securityIssues,
-        issues: securityIssues ? [
+        passed: !isBadServer,
+        issues: isBadServer ? [
           "Unauthorized access points detected in network configuration",
           "Potential data exposure in server control interface"
         ] : []
       });
       
-      if (!securityIssues) {
+      if (!isBadServer) {
         // Generate new fingerprint for the server
         const fingerprint = Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
         setNewFingerprint(fingerprint);
@@ -253,6 +274,16 @@ const ServersScreen = ({ dashboardData }) => {
                 <h2 className="text-xl font-semibold mb-4">Register New MCP Server: Step 1</h2>
                 <p className="text-gray-300 mb-4">Please enter the URL for the MCP Server you want to register:</p>
                 
+                {/* For demonstration purposes */}
+                <div className="bg-gray-700 p-3 rounded mb-4 text-sm text-gray-300 flex items-start">
+                  <div className="text-yellow-400 mr-2 flex-shrink-0 mt-0.5">
+                    <AlertCircle size={16} />
+                  </div>
+                  <div>
+                    <span className="font-medium">Demo Tip:</span> Try "https://bad-mcp.com" for a server that will fail the security check.
+                  </div>
+                </div>
+                
                 <div className="mb-6">
                   <input
                     type="url"
@@ -313,26 +344,33 @@ const ServersScreen = ({ dashboardData }) => {
                   </div>
                   
                   <div className="mt-4">
-                    <p className="text-sm text-gray-400">Resources:</p>
-                    <ul className="list-none pl-0 grid grid-cols-3 gap-2 mt-2">
-                      <li>
-                        <span className="text-xs text-gray-400 block">CPU</span>
-                        <span className="text-sm">{serverInfo.resources.cpu}</span>
-                      </li>
-                      <li>
-                        <span className="text-xs text-gray-400 block">Memory</span>
-                        <span className="text-sm">{serverInfo.resources.memory}</span>
-                      </li>
-                      <li>
-                        <span className="text-xs text-gray-400 block">Storage</span>
-                        <span className="text-sm">{serverInfo.resources.storage}</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="mt-4">
                     <p className="text-sm text-gray-400">Last Update:</p>
                     <p>{new Date(serverInfo.lastUpdate).toLocaleString()}</p>
+                  </div>
+
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Available Tools:</p>
+                    <div className="mt-2 space-y-2">
+                      {serverInfo.tools.map((tool, index) => (
+                        <div key={index} className="bg-gray-800 rounded p-3">
+                          <div className="flex items-center">
+                            <span className="text-purple-400 font-semibold">{tool.name}</span>
+                            <span className="ml-2 text-sm text-gray-400">({Object.keys(tool.parameters).length} parameters)</span>
+                          </div>
+                          <p className="text-sm text-gray-300 mt-1">{tool.description}</p>
+                          <div className="mt-2">
+                            <p className="text-xs text-gray-400">Parameters:</p>
+                            <ul className="list-disc list-inside text-xs text-gray-300">
+                              {Object.entries(tool.parameters).map(([param, type]) => (
+                                <li key={param}>
+                                  <span className="text-purple-300">{param}</span>: {Array.isArray(type) ? type.join(' | ') : type}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 
