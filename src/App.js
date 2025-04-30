@@ -26,7 +26,7 @@ export default function NexusOS() {
   // State to track the current active screen
   const [activeScreen, setActiveScreen] = useState('dashboard');
   
-  // Fetch data on component mount and set up refresh interval
+  // Fetch data on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -43,12 +43,6 @@ export default function NexusOS() {
     };
     
     fetchData();
-    
-    // Refresh data every 30 seconds
-    const intervalId = setInterval(fetchData, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
   }, []);
   
   // Function to refresh data manually
@@ -100,7 +94,7 @@ export default function NexusOS() {
             <div className="text-cyan-400">
               <Shield size={28} />
             </div>
-            <h1 className="text-2xl font-bold text-cyan-400">NEXUS OS</h1>
+            <h1 className="text-2xl font-bold text-cyan-400">Enterprise Agents</h1>
           </div>
         </div>
         
