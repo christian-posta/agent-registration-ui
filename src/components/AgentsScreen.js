@@ -1,18 +1,19 @@
 // src/components/AgentsScreen.js
 import React, { useState, useEffect } from 'react';
-import { Users, PlusCircle } from 'lucide-react';
+import { Users, PlusCircle, AlertCircle, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { sampleAgentData, getPaginatedData } from '../services/mockData';
 
 const AgentsScreen = ({ dashboardData }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [agentData, setAgentData] = useState([]);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [newAgent, setNewAgent] = useState({
-    name: '',
-    description: '',
-    fingerprint: ''
-  });
+  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [agentUrl, setAgentUrl] = useState('');
+  const [agentInfo, setAgentInfo] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState(null);
+  const [newFingerprint, setNewFingerprint] = useState('');
   const rowsPerPage = 5;
   
   useEffect(() => {
@@ -35,43 +36,97 @@ const AgentsScreen = ({ dashboardData }) => {
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage + 1;
   const indexOfLastRow = Math.min(currentPage * rowsPerPage, agentData.length);
   
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewAgent(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Start the workflow
+  const startRegistrationWorkflow = () => {
+    setShowWorkflow(true);
+    setCurrentStep(1);
+    setAgentUrl('');
+    setAgentInfo(null);
+    setSecurityStatus(null);
+    setNewFingerprint('');
   };
   
-  // Handle form submission
-  const handleRegisterAgent = (e) => {
-    e.preventDefault();
+  // Handle URL input change
+  const handleUrlChange = (e) => {
+    setAgentUrl(e.target.value);
+  };
+  
+  // Process step 1: Enter URL
+  const processStep1 = () => {
+    // Simulate fetching agent info from URL
+    // In a real app, you would make an API call here
     
-    // Generate a random fingerprint if not provided
-    const fingerprint = newAgent.fingerprint || 
-      Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-    
-    // Create new agent object
-    const agent = {
-      id: `agent-${agentData.length + 1}`,
-      name: newAgent.name,
-      description: newAgent.description,
-      fingerprint: fingerprint,
-      status: 'active',
-      lastSeen: new Date().toISOString()
+    // Mock agent info based on URL
+    const mockAgentInfo = {
+      name: `Agent from ${new URL(agentUrl).hostname}`,
+      version: "1.0.3",
+      description: "This agent provides automated data processing capabilities for system analytics and monitoring.",
+      capabilities: [
+        "System monitoring",
+        "Data processing",
+        "Analytics reporting"
+      ],
+      lastUpdate: new Date().toISOString()
     };
     
-    // Add new agent to the list
-    setAgentData([...agentData, agent]);
+    setAgentInfo(mockAgentInfo);
+    setCurrentStep(2);
+  };
+  
+  // Process step 2: Review agent info
+  const processStep2 = () => {
+    setCurrentStep(3);
+    setIsProcessing(true);
     
-    // Reset form and close modal
-    setNewAgent({
-      name: '',
-      description: '',
-      fingerprint: ''
-    });
-    setShowRegisterModal(false);
+    // Simulate processing time (5 seconds)
+    setTimeout(() => {
+      // Randomly determine if security issues were found
+      // In a real app, this would be actual security analysis
+      const securityIssues = Math.random() > 0.7; // 30% chance of security issues
+      
+      setIsProcessing(false);
+      setSecurityStatus({
+        passed: !securityIssues,
+        issues: securityIssues ? [
+          "Potential prompt injection detected in agent response handler",
+          "Possible shadow commands in initialization sequence"
+        ] : []
+      });
+      
+      if (!securityIssues) {
+        // Generate new fingerprint for the agent
+        const fingerprint = Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        setNewFingerprint(fingerprint);
+      }
+      
+      setCurrentStep(4);
+    }, 5000);
+  };
+  
+  // Process step 4: Final step (if passed security check)
+  const completeRegistration = () => {
+    if (securityStatus && securityStatus.passed) {
+      // Create new agent object
+      const newAgent = {
+        id: `agent-${agentData.length + 1}`,
+        name: agentInfo.name,
+        description: agentInfo.description,
+        fingerprint: newFingerprint,
+        status: 'active',
+        lastSeen: new Date().toISOString()
+      };
+      
+      // Add new agent to the list
+      setAgentData([...agentData, newAgent]);
+    }
+    
+    // Close the workflow
+    setShowWorkflow(false);
+  };
+  
+  // Close the workflow without saving
+  const cancelWorkflow = () => {
+    setShowWorkflow(false);
   };
   
   return (
@@ -87,7 +142,7 @@ const AgentsScreen = ({ dashboardData }) => {
         {/* Register New Agent Button */}
         <button 
           className="flex items-center bg-cyan-700 hover:bg-cyan-600 text-white px-4 py-2 rounded-md"
-          onClick={() => setShowRegisterModal(true)}
+          onClick={startRegistrationWorkflow}
         >
           <PlusCircle size={18} className="mr-2" />
           Register New Agent
@@ -185,64 +240,180 @@ const AgentsScreen = ({ dashboardData }) => {
         </div>
       </div>
       
-      {/* Register Agent Modal */}
-      {showRegisterModal && (
+      {/* Registration Workflow Modal */}
+      {showWorkflow && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Register New Agent</h2>
+            {/* Step 1: Enter URL */}
+            {currentStep === 1 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New Agent: Step 1</h2>
+                <p className="text-gray-300 mb-4">Please enter the URL for the Agent you want to register:</p>
+                
+                <div className="mb-6">
+                  <input
+                    type="url"
+                    value={agentUrl}
+                    onChange={handleUrlChange}
+                    placeholder="https://agent.example.com"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-cyan-700 text-white rounded-md hover:bg-cyan-600"
+                    onClick={processStep1}
+                    disabled={!agentUrl || !agentUrl.startsWith('http')}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
             
-            <form onSubmit={handleRegisterAgent}>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">Agent Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newAgent.name}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500"
-                  required
-                />
+            {/* Step 2: Display Agent Info */}
+            {currentStep === 2 && agentInfo && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New Agent: Step 2</h2>
+                <p className="text-gray-300 mb-4">Please review the agent information:</p>
+                
+                <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-400">Name:</p>
+                      <p className="text-cyan-400 font-semibold">{agentInfo.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Version:</p>
+                      <p>{agentInfo.version}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Description:</p>
+                    <p>{agentInfo.description}</p>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Capabilities:</p>
+                    <ul className="list-disc pl-5">
+                      {agentInfo.capabilities.map((cap, index) => (
+                        <li key={index}>{cap}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Last Update:</p>
+                    <p>{new Date(agentInfo.lastUpdate).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-cyan-700 text-white rounded-md hover:bg-cyan-600"
+                    onClick={processStep2}
+                  >
+                    Verify Security
+                  </button>
+                </div>
               </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">Description</label>
-                <textarea
-                  name="description"
-                  value={newAgent.description}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500 h-24"
-                  required
-                />
+            )}
+            
+            {/* Step 3: Processing */}
+            {currentStep === 3 && isProcessing && (
+              <div className="text-center py-8">
+                <Loader size={48} className="mx-auto mb-4 animate-spin text-cyan-400" />
+                <h2 className="text-xl font-semibold mb-2">Processing Security Check</h2>
+                <p className="text-gray-300">Scanning for prompt injections and shadowing...</p>
               </div>
-              
-              <div className="mb-6">
-                <label className="block text-gray-300 mb-2">Fingerprint (Optional)</label>
-                <input
-                  type="text"
-                  name="fingerprint"
-                  value={newAgent.fingerprint}
-                  onChange={handleInputChange}
-                  placeholder="Auto-generated if left blank"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-mono text-sm"
-                />
+            )}
+            
+            {/* Step 4: Security Results */}
+            {currentStep === 4 && securityStatus && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New Agent: Security Check</h2>
+                
+                {securityStatus.passed ? (
+                  <div className="bg-green-900 bg-opacity-20 border border-green-700 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <CheckCircle size={24} className="text-green-500 mr-2" />
+                      <h3 className="text-lg font-semibold text-green-500">Security Check Passed</h3>
+                    </div>
+                    <p className="mt-2 text-gray-300">No security issues detected. This agent is safe to register.</p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-400">New Agent Fingerprint:</p>
+                      <p className="font-mono text-sm bg-gray-800 p-2 rounded mt-1 overflow-x-auto">
+                        {newFingerprint}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-900 bg-opacity-20 border border-red-700 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <XCircle size={24} className="text-red-500 mr-2" />
+                      <h3 className="text-lg font-semibold text-red-500">Security Check Failed</h3>
+                    </div>
+                    <p className="mt-2 text-gray-300">Security issues were detected. This agent may not be safe to register.</p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-400">Issues Detected:</p>
+                      <ul className="list-disc pl-5 mt-1">
+                        {securityStatus.issues.map((issue, index) => (
+                          <li key={index} className="text-red-400">{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  {securityStatus.passed ? (
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-600"
+                      onClick={completeRegistration}
+                    >
+                      Complete Registration
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-600"
+                      onClick={cancelWorkflow}
+                    >
+                      Abort Registration
+                    </button>
+                  )}
+                </div>
               </div>
-              
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
-                  onClick={() => setShowRegisterModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-cyan-700 text-white rounded-md hover:bg-cyan-600"
-                >
-                  Register
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}

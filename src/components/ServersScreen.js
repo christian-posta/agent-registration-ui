@@ -1,19 +1,19 @@
 // src/components/ServersScreen.js
 import React, { useState, useEffect } from 'react';
-import { Server, PlusCircle } from 'lucide-react';
+import { Server, PlusCircle, AlertCircle, CheckCircle, XCircle, Loader } from 'lucide-react';
 import { sampleServerData, getPaginatedData } from '../services/mockData';
 
 const ServersScreen = ({ dashboardData }) => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [serverData, setServerData] = useState([]);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [newServer, setNewServer] = useState({
-    name: '',
-    description: '',
-    fingerprint: '',
-    region: 'US-East'
-  });
+  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [serverUrl, setServerUrl] = useState('');
+  const [serverInfo, setServerInfo] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [securityStatus, setSecurityStatus] = useState(null);
+  const [newFingerprint, setNewFingerprint] = useState('');
   const rowsPerPage = 5;
   
   useEffect(() => {
@@ -36,46 +36,100 @@ const ServersScreen = ({ dashboardData }) => {
   const indexOfFirstRow = (currentPage - 1) * rowsPerPage + 1;
   const indexOfLastRow = Math.min(currentPage * rowsPerPage, serverData.length);
   
-  // Handle form input changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNewServer(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Start the workflow
+  const startRegistrationWorkflow = () => {
+    setShowWorkflow(true);
+    setCurrentStep(1);
+    setServerUrl('');
+    setServerInfo(null);
+    setSecurityStatus(null);
+    setNewFingerprint('');
   };
   
-  // Handle form submission
-  const handleRegisterServer = (e) => {
-    e.preventDefault();
+  // Handle URL input change
+  const handleUrlChange = (e) => {
+    setServerUrl(e.target.value);
+  };
+  
+  // Process step 1: Enter URL
+  const processStep1 = () => {
+    // Simulate fetching server info from URL
+    // In a real app, you would make an API call here
     
-    // Generate a random fingerprint if not provided
-    const fingerprint = newServer.fingerprint || 
-      Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
-    
-    // Create new server object
-    const server = {
-      id: `server-${serverData.length + 1}`,
-      name: newServer.name,
-      description: newServer.description,
-      fingerprint: fingerprint,
-      status: 'online',
-      region: newServer.region,
-      uptime: 0,
-      load: 10
+    // Mock server info based on URL
+    const mockServerInfo = {
+      name: `MCP-${new URL(serverUrl).hostname.split('.')[0].toUpperCase()}`,
+      version: "3.2.1",
+      region: ["US-East", "US-West", "EU-Central", "Asia-Pacific"][Math.floor(Math.random() * 4)],
+      description: "This MCP server provides centralized control and coordination for system operations.",
+      resources: {
+        cpu: "16 cores",
+        memory: "64 GB",
+        storage: "2 TB SSD"
+      },
+      lastUpdate: new Date().toISOString()
     };
     
-    // Add new server to the list
-    setServerData([...serverData, server]);
+    setServerInfo(mockServerInfo);
+    setCurrentStep(2);
+  };
+  
+  // Process step 2: Review server info
+  const processStep2 = () => {
+    setCurrentStep(3);
+    setIsProcessing(true);
     
-    // Reset form and close modal
-    setNewServer({
-      name: '',
-      description: '',
-      fingerprint: '',
-      region: 'US-East'
-    });
-    setShowRegisterModal(false);
+    // Simulate processing time (5 seconds)
+    setTimeout(() => {
+      // Randomly determine if security issues were found
+      // In a real app, this would be actual security analysis
+      const securityIssues = Math.random() > 0.7; // 30% chance of security issues
+      
+      setIsProcessing(false);
+      setSecurityStatus({
+        passed: !securityIssues,
+        issues: securityIssues ? [
+          "Unauthorized access points detected in network configuration",
+          "Potential data exposure in server control interface"
+        ] : []
+      });
+      
+      if (!securityIssues) {
+        // Generate new fingerprint for the server
+        const fingerprint = Array(40).fill().map(() => Math.floor(Math.random() * 16).toString(16)).join('');
+        setNewFingerprint(fingerprint);
+      }
+      
+      setCurrentStep(4);
+    }, 5000);
+  };
+  
+  // Process step 4: Final step (if passed security check)
+  const completeRegistration = () => {
+    if (securityStatus && securityStatus.passed) {
+      // Create new server object
+      const newServer = {
+        id: `server-${serverData.length + 1}`,
+        name: serverInfo.name,
+        description: serverInfo.description,
+        fingerprint: newFingerprint,
+        status: 'online',
+        region: serverInfo.region,
+        uptime: 0,
+        load: 10
+      };
+      
+      // Add new server to the list
+      setServerData([...serverData, newServer]);
+    }
+    
+    // Close the workflow
+    setShowWorkflow(false);
+  };
+  
+  // Close the workflow without saving
+  const cancelWorkflow = () => {
+    setShowWorkflow(false);
   };
   
   return (
@@ -91,7 +145,7 @@ const ServersScreen = ({ dashboardData }) => {
         {/* Register New MCP Server Button */}
         <button 
           className="flex items-center bg-purple-700 hover:bg-purple-600 text-white px-4 py-2 rounded-md"
-          onClick={() => setShowRegisterModal(true)}
+          onClick={startRegistrationWorkflow}
         >
           <PlusCircle size={18} className="mr-2" />
           Register New MCP Server
@@ -189,79 +243,194 @@ const ServersScreen = ({ dashboardData }) => {
         </div>
       </div>
       
-      {/* Register Server Modal */}
-      {showRegisterModal && (
+      {/* Registration Workflow Modal */}
+      {showWorkflow && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-gray-800 rounded-lg border border-gray-700 p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Register New MCP Server</h2>
+            {/* Step 1: Enter URL */}
+            {currentStep === 1 && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New MCP Server: Step 1</h2>
+                <p className="text-gray-300 mb-4">Please enter the URL for the MCP Server you want to register:</p>
+                
+                <div className="mb-6">
+                  <input
+                    type="url"
+                    value={serverUrl}
+                    onChange={handleUrlChange}
+                    placeholder="https://mcp-server.example.com"
+                    className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    required
+                  />
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600"
+                    onClick={processStep1}
+                    disabled={!serverUrl || !serverUrl.startsWith('http')}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
             
-            <form onSubmit={handleRegisterServer}>
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">Server Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={newServer.name}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  required
-                />
+            {/* Step 2: Display Server Info */}
+            {currentStep === 2 && serverInfo && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New MCP Server: Step 2</h2>
+                <p className="text-gray-300 mb-4">Please review the server information:</p>
+                
+                <div className="bg-gray-700 rounded-lg p-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-400">Name:</p>
+                      <p className="text-purple-400 font-semibold">{serverInfo.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-400">Version:</p>
+                      <p>{serverInfo.version}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Description:</p>
+                    <p>{serverInfo.description}</p>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Region:</p>
+                    <p>{serverInfo.region}</p>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Resources:</p>
+                    <ul className="list-none pl-0 grid grid-cols-3 gap-2 mt-2">
+                      <li>
+                        <span className="text-xs text-gray-400 block">CPU</span>
+                        <span className="text-sm">{serverInfo.resources.cpu}</span>
+                      </li>
+                      <li>
+                        <span className="text-xs text-gray-400 block">Memory</span>
+                        <span className="text-sm">{serverInfo.resources.memory}</span>
+                      </li>
+                      <li>
+                        <span className="text-xs text-gray-400 block">Storage</span>
+                        <span className="text-sm">{serverInfo.resources.storage}</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <p className="text-sm text-gray-400">Last Update:</p>
+                    <p>{new Date(serverInfo.lastUpdate).toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600"
+                    onClick={processStep2}
+                  >
+                    Verify Security
+                  </button>
+                </div>
               </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">Description</label>
-                <textarea
-                  name="description"
-                  value={newServer.description}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500 h-24"
-                  required
-                />
+            )}
+            
+            {/* Step 3: Processing */}
+            {currentStep === 3 && isProcessing && (
+              <div className="text-center py-8">
+                <Loader size={48} className="mx-auto mb-4 animate-spin text-purple-400" />
+                <h2 className="text-xl font-semibold mb-2">Processing Security Check</h2>
+                <p className="text-gray-300">Scanning for prompt injections and shadowing...</p>
               </div>
-              
-              <div className="mb-4">
-                <label className="block text-gray-300 mb-2">Region</label>
-                <select
-                  name="region"
-                  value={newServer.region}
-                  onChange={handleInputChange}
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                >
-                  <option value="US-East">US-East</option>
-                  <option value="US-West">US-West</option>
-                  <option value="EU-Central">EU-Central</option>
-                  <option value="Asia-Pacific">Asia-Pacific</option>
-                </select>
+            )}
+            
+            {/* Step 4: Security Results */}
+            {currentStep === 4 && securityStatus && (
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Register New MCP Server: Security Check</h2>
+                
+                {securityStatus.passed ? (
+                  <div className="bg-green-900 bg-opacity-20 border border-green-700 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <CheckCircle size={24} className="text-green-500 mr-2" />
+                      <h3 className="text-lg font-semibold text-green-500">Security Check Passed</h3>
+                    </div>
+                    <p className="mt-2 text-gray-300">No security issues detected. This MCP server is safe to register.</p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-400">New Server Fingerprint:</p>
+                      <p className="font-mono text-sm bg-gray-800 p-2 rounded mt-1 overflow-x-auto">
+                        {newFingerprint}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-red-900 bg-opacity-20 border border-red-700 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <XCircle size={24} className="text-red-500 mr-2" />
+                      <h3 className="text-lg font-semibold text-red-500">Security Check Failed</h3>
+                    </div>
+                    <p className="mt-2 text-gray-300">Security issues were detected. This MCP server may not be safe to register.</p>
+                    
+                    <div className="mt-4">
+                      <p className="text-sm text-gray-400">Issues Detected:</p>
+                      <ul className="list-disc pl-5 mt-1">
+                        {securityStatus.issues.map((issue, index) => (
+                          <li key={index} className="text-red-400">{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex justify-end space-x-2">
+                  <button
+                    type="button"
+                    className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                    onClick={cancelWorkflow}
+                  >
+                    Cancel
+                  </button>
+                  {securityStatus.passed ? (
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-green-700 text-white rounded-md hover:bg-green-600"
+                      onClick={completeRegistration}
+                    >
+                      Complete Registration
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="px-4 py-2 bg-red-700 text-white rounded-md hover:bg-red-600"
+                      onClick={cancelWorkflow}
+                    >
+                      Abort Registration
+                    </button>
+                  )}
+                </div>
               </div>
-              
-              <div className="mb-6">
-                <label className="block text-gray-300 mb-2">Fingerprint (Optional)</label>
-                <input
-                  type="text"
-                  name="fingerprint"
-                  value={newServer.fingerprint}
-                  onChange={handleInputChange}
-                  placeholder="Auto-generated if left blank"
-                  className="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-1 focus:ring-purple-500 font-mono text-sm"
-                />
-              </div>
-              
-              <div className="flex justify-end space-x-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
-                  onClick={() => setShowRegisterModal(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600"
-                >
-                  Register
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
       )}
