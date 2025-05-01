@@ -12,6 +12,7 @@ const ServersScreen = ({ dashboardData }) => {
   const [serverUrl, setServerUrl] = useState('');
   const [serverInfo, setServerInfo] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanningMessage, setScanningMessage] = useState('');
   const [securityStatus, setSecurityStatus] = useState(null);
   const [newFingerprint, setNewFingerprint] = useState('');
   const rowsPerPage = 5;
@@ -56,52 +57,65 @@ const ServersScreen = ({ dashboardData }) => {
     // Simulate fetching server info from URL
     // In a real app, you would make an API call here
     
-    // Mock server info based on URL
-    const mockServerInfo = {
-      name: `mcp-${new URL(serverUrl).hostname.split('.')[0].toLowerCase()}`,
-      version: "3.2.1",
-      region: ["US-East", "US-West", "EU-Central", "Asia-Pacific"][Math.floor(Math.random() * 4)],
-      description: "This MCP server provides centralized control and coordination for system operations.",
-      lastUpdate: new Date().toISOString(),
-      tools: [
-        {
-          name: "file_search",
-          description: "Search through files and directories",
-          parameters: {
-            query: "string",
-            path: "string",
-            recursive: "boolean"
-          }
-        },
-        {
-          name: "code_analysis",
-          description: "Analyze code for patterns and issues",
-          parameters: {
-            file_path: "string",
-            analysis_type: ["complexity", "security", "style"]
-          }
-        },
-        {
-          name: "database_query",
-          description: "Execute SQL queries on connected databases",
-          parameters: {
-            query: "string",
-            database: "string"
-          }
-        }
-      ]
-    };
+    // Show loading state
+    setIsProcessing(true);
     
-    setServerInfo(mockServerInfo);
-    setCurrentStep(2);
+    // Simulate network delay
+    setTimeout(() => {
+      // Mock server info based on URL
+      const mockServerInfo = {
+        name: `mcp-${new URL(serverUrl).hostname.split('.')[0].toLowerCase()}`,
+        version: "3.2.1",
+        region: ["US-East", "US-West", "EU-Central", "Asia-Pacific"][Math.floor(Math.random() * 4)],
+        description: "This MCP server provides centralized control and coordination for system operations.",
+        lastUpdate: new Date().toISOString(),
+        tools: [
+          {
+            name: "file_search",
+            description: "Search through files and directories",
+            parameters: {
+              query: "string",
+              path: "string",
+              recursive: "boolean"
+            }
+          },
+          {
+            name: "code_analysis",
+            description: "Analyze code for patterns and issues",
+            parameters: {
+              file_path: "string",
+              analysis_type: ["complexity", "security", "style"]
+            }
+          },
+          {
+            name: "database_query",
+            description: "Execute SQL queries on connected databases",
+            parameters: {
+              query: "string",
+              database: "string"
+            }
+          }
+        ]
+      };
+      
+      setServerInfo(mockServerInfo);
+      setIsProcessing(false);
+      setCurrentStep(2);
+    }, 2000);
   };
   
   // Process step 2: Review server info
   const processStep2 = () => {
     setCurrentStep(3);
     setIsProcessing(true);
+    setScanningMessage('Starting registration flow...');
     
-    // Simulate processing time (5 seconds)
+    // Update messages at different intervals
+    setTimeout(() => setScanningMessage('Checking for name collisions...'), 2000);
+    setTimeout(() => setScanningMessage('Checking poison prompts...'), 4000);
+    setTimeout(() => setScanningMessage('Finishing security checks...'), 6000);
+    
+    // Simulate processing time (7 seconds)
     setTimeout(() => {
       // Check if the URL is the bad MCP server
       const isBadServer = new URL(serverUrl).hostname === 'bad-mcp.com';
@@ -122,7 +136,7 @@ const ServersScreen = ({ dashboardData }) => {
       }
       
       setCurrentStep(4);
-    }, 5000);
+    }, 8500);
   };
   
   // Process step 4: Final step (if passed security check)
@@ -305,11 +319,18 @@ const ServersScreen = ({ dashboardData }) => {
                   </button>
                   <button
                     type="button"
-                    className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600"
+                    className="px-4 py-2 bg-purple-700 text-white rounded-md hover:bg-purple-600 flex items-center"
                     onClick={processStep1}
-                    disabled={!serverUrl || !serverUrl.startsWith('http')}
+                    disabled={!serverUrl || !serverUrl.startsWith('http') || isProcessing}
                   >
-                    Next
+                    {isProcessing ? (
+                      <>
+                        <Loader size={16} className="animate-spin mr-2" />
+                        Fetching Server Details...
+                      </>
+                    ) : (
+                      'Next'
+                    )}
                   </button>
                 </div>
               </div>
@@ -398,7 +419,7 @@ const ServersScreen = ({ dashboardData }) => {
               <div className="text-center py-8">
                 <Loader size={48} className="mx-auto mb-4 animate-spin text-purple-400" />
                 <h2 className="text-xl font-semibold mb-2">Processing Security Check</h2>
-                <p className="text-gray-300">Scanning for prompt injections and shadowing...</p>
+                <p className="text-gray-300">{scanningMessage}</p>
               </div>
             )}
             
