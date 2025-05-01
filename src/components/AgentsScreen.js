@@ -118,6 +118,7 @@ const AgentsScreen = ({ dashboardData }) => {
   const [fetchError, setFetchError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [scanningMessage, setScanningMessage] = useState('');
   const [securityStatus, setSecurityStatus] = useState(null);
   const [newFingerprint, setNewFingerprint] = useState('');
   const rowsPerPage = 5;
@@ -268,8 +269,14 @@ const AgentsScreen = ({ dashboardData }) => {
   const processStep2 = () => {
     setCurrentStep(3);
     setIsProcessing(true);
+    setScanningMessage('Starting registration flow...');
     
-    // Simulate processing time (5 seconds)
+    // Update messages at different intervals
+    setTimeout(() => setScanningMessage('Checking for name collisions...'), 2000);
+    setTimeout(() => setScanningMessage('Checking poison prompts...'), 4000);
+    setTimeout(() => setScanningMessage('Finishing security checks...'), 6000);
+    
+    // Simulate processing time (7 seconds)
     setTimeout(() => {
       // Run security check to detect malicious content
       const maliciousIssues = detectMaliciousContent(agentCard);
@@ -310,7 +317,7 @@ const AgentsScreen = ({ dashboardData }) => {
       }
       
       setCurrentStep(4);
-    }, 5000);
+    }, 8500);
   };
   
   // Process step 4: Final step (if passed security check)
@@ -686,7 +693,7 @@ const AgentsScreen = ({ dashboardData }) => {
               <div className="text-center py-8">
                 <Loader size={48} className="mx-auto mb-4 animate-spin text-cyan-400" />
                 <h2 className="text-xl font-semibold mb-2">Processing Security Check</h2>
-                <p className="text-gray-300">Scanning for prompt injections and shadowing...</p>
+                <p className="text-gray-300">{scanningMessage}</p>
               </div>
             )}
             
