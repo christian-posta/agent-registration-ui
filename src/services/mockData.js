@@ -57,6 +57,20 @@ export const sampleAgentData = [
     { id: 15, name: "ResourceScheduler", description: "System resource allocation optimizer", fingerprint: "4e:9b:1d:7c:2a:6f", mcpServer: "mcp-asia-01.datacenter.com" }
   ];
   
+  // Sample LLM data for the LLM screen
+  export const sampleLLMData = [
+    { id: 1, name: "Claude 3 Opus", provider: "Anthropic", version: "3.0", contextLength: "200K", status: "active" },
+    { id: 2, name: "Claude 3 Sonnet", provider: "Anthropic", version: "3.0", contextLength: "200K", status: "active" },
+    { id: 3, name: "Claude 3 Haiku", provider: "Anthropic", version: "3.0", contextLength: "200K", status: "active" },
+    { id: 4, name: "GPT-4 Turbo", provider: "OpenAI", version: "4.0", contextLength: "128K", status: "active" },
+    { id: 5, name: "GPT-4", provider: "OpenAI", version: "4.0", contextLength: "32K", status: "active" },
+    { id: 6, name: "GPT-3.5 Turbo", provider: "OpenAI", version: "3.5", contextLength: "16K", status: "active" },
+    { id: 7, name: "Gemini Pro", provider: "Google", version: "1.0", contextLength: "32K", status: "active" },
+    { id: 8, name: "Gemini Ultra", provider: "Google", version: "1.0", contextLength: "32K", status: "inactive" },
+    { id: 9, name: "Mixtral 8x7B", provider: "Mistral", version: "1.0", contextLength: "32K", status: "active" },
+    { id: 10, name: "Llama 2 70B", provider: "Meta", version: "2.0", contextLength: "4K", status: "inactive" }
+  ];
+  
   // Function to get paginated data
   export const getPaginatedData = (data, page, rowsPerPage) => {
     const startIndex = (page - 1) * rowsPerPage;

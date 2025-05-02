@@ -1,6 +1,6 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, Server, Shield, Users, Wrench, Home, Search, Bell, Moon } from 'lucide-react';
+import { RefreshCw, Server, Shield, Users, Wrench, Home, Search, Bell, Moon, Brain } from 'lucide-react';
 
 // Import API service
 import API from './services/api';
@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import AgentsScreen from './components/AgentsScreen';
 import ServersScreen from './components/ServersScreen';
 import ToolsScreen from './components/ToolsScreen';
+import LLMScreen from './components/LLMScreen';
 
 export default function NexusOS() {
   // State for dashboard data, loading, and errors
@@ -75,6 +76,8 @@ export default function NexusOS() {
         return <ServersScreen dashboardData={dashboardData} />;
       case 'tools':
         return <ToolsScreen dashboardData={dashboardData} />;
+      case 'llms':
+        return <LLMScreen dashboardData={dashboardData} />;
       default:
         return <Dashboard 
           dashboardData={dashboardData} 
@@ -137,6 +140,16 @@ export default function NexusOS() {
                 <Wrench className="mr-3" size={20} />
                 <span>All Tools</span>
                 <span className="ml-auto bg-gray-700 px-2 py-1 text-xs rounded-full">{dashboardData.tools.count}</span>
+              </button>
+            </li>
+            <li>
+              <button 
+                onClick={() => setActiveScreen('llms')}
+                className={`flex items-center p-3 rounded-md w-full text-left transition-colors ${activeScreen === 'llms' ? 'bg-gray-800 text-cyan-400' : 'hover:bg-gray-800'}`}
+              >
+                <Brain className="mr-3" size={20} />
+                <span>LLMs</span>
+                <span className="ml-auto bg-gray-700 px-2 py-1 text-xs rounded-full">10</span>
               </button>
             </li>
           </ul>
