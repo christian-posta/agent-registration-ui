@@ -17,11 +17,6 @@ export const sampleAgentData = [
     { id: 8, name: "marketing-agent.acme.com", description: "Coordinates marketing campaigns", fingerprint: "6a:1f:8d:2b:5c:9e" },
     { id: 9, name: "logistics-agent.acme.com", description: "Optimizes logistics and shipping", fingerprint: "1b:7e:4c:9a:3d:5f" },
     { id: 10, name: "research-agent.acme.com", description: "Assists with R&D information gathering", fingerprint: "9c:2a:5f:8b:1d:7e" },
-    { id: 11, name: "dev-agent.acme.com", description: "Supports development environments", fingerprint: "4f:8a:2d:6c:9b:3e" },
-    { id: 12, name: "product-agent.acme.com", description: "Manages product information and updates", fingerprint: "7d:3b:5e:1a:8f:2c" },
-    { id: 13, name: "payment-agent.acme.com", description: "Processes payment transactions", fingerprint: "2c:6d:9a:3f:5b:8e" },
-    { id: 14, name: "legal-agent.acme.com", description: "Handles legal document processing", fingerprint: "5a:1c:7b:3e:9d:2f" },
-    { id: 15, name: "support-agent.acme.com", description: "Provides technical support automation", fingerprint: "8b:4d:1c:7a:2f:6e" }
   ];
   
   // Sample server data for the servers screen

@@ -18,9 +18,9 @@ const API = {
         // Simulating API response with a delay
         await new Promise(resolve => setTimeout(resolve, 300));
         return {
-          count: 147,
-          active: 121,
-          inactive: 26,
+          count: 10,
+          active: 8,
+          inactive: 2,
           data: Array(147).fill().map((_, i) => ({
             id: `agent-${i+1}`,
             name: `Agent ${i+1}`,
@@ -45,9 +45,9 @@ const API = {
         // Simulating API response with a delay
         await new Promise(resolve => setTimeout(resolve, 250));
         return {
-          count: 28,
-          online: 26,
-          offline: 2,
+          count: 15,
+          online: 14,
+          offline: 1,
           data: Array(28).fill().map((_, i) => ({
             id: `server-${i+1}`,
             name: `MCP-SRV-${i+1}`,

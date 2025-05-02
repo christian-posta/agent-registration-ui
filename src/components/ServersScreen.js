@@ -235,8 +235,8 @@ const ServersScreen = ({ dashboardData }) => {
                   <td className="px-6 py-4 font-mono text-sm text-gray-400">{server.fingerprint}</td>
                   <td className="px-6 py-4">
                     <div className="flex space-x-2">
-                      <button className="text-purple-400 hover:text-purple-300 text-sm">Manage</button>
-                      <button className="text-red-400 hover:text-red-300 text-sm">Reboot</button>
+                      <button className="text-purple-400 hover:text-purple-300 text-sm">Edit</button>
+                      <button className="text-red-400 hover:text-red-300 text-sm">Disable</button>
                     </div>
                   </td>
                 </tr>

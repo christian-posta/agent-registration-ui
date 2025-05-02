@@ -94,7 +94,7 @@ export default function NexusOS() {
             <div className="text-cyan-400">
               <Shield size={28} />
             </div>
-            <h1 className="text-2xl font-bold text-cyan-400">Enterprise Agents</h1>
+            <h1 className="text-2xl font-bold text-cyan-400">AI Agent Portal</h1>
           </div>
         </div>
         
